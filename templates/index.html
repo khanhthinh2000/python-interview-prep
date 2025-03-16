@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Interview Prep</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ problem.title }}</h1>
+        <p>{{ problem.description }}</p>
+
+        <textarea id="code" rows="5" cols="50">
+def sum_two_numbers(a, b):
+    result = a + b
+    return result
+        </textarea>
+
+        <br>
+        <button onclick="submitCode()">Run Code</button>
+        <p id="output"></p>
+    </div>
+
+    <script>
+        async function submitCode() {
+            const code = document.getElementById("code").value;
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const result = await response.json();
+            document.getElementById("output").innerText = "Result: " + result.status;
+        }
+    </script>
+</body>
+</html>
