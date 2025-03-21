@@ -8,31 +8,50 @@
 </head>
 <body>
     <div class="container">
-        <h1>{{ problem.title }}</h1>
-        <p>{{ problem.description }}</p>
+        <h1>{{ problem.title if problem else "No Problem Title" }}</h1>
+        <p>{{ problem.description if problem else "No Problem Description" }}</p>
 
         <textarea id="code" rows="5" cols="50">
 def sum_two_numbers(a, b):
-    result = a + b
-    return result
+    print("Adding numbers...")
+    return a + b
+
+sum_two_numbers(2, 2)
+
         </textarea>
 
         <br>
         <button onclick="submitCode()">Run Code</button>
-        <p id="output"></p>
+
+        <!-- Display Result Message -->
+        <p id="result-message"></p>
+
+        <!-- Output Display Section (Added) -->
+        <div id="output-section">
+            <h3>Output</h3>
+            <p><strong></strong> <span id="user-output"></span></p>
+        </div>
     </div>
 
     <script>
-        async function submitCode() {
-            const code = document.getElementById("code").value;
-            const response = await fetch('/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
-            });
-            const result = await response.json();
-            document.getElementById("output").innerText = "Result: " + result.status;
-        }
-    </script>
+    async function submitCode() {
+        const code = document.getElementById("code").value;
+        console.log("DEBUG - Sending code:", code);  // Debugging log
+
+        const response = await fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+
+        const result = await response.json();
+        console.log("DEBUG - Response from Flask:", result); // Debugging log
+
+        document.getElementById("result-message").innerText = "Result: " + result.status;
+
+        // ✅ Show full Python output (handles both print & return)
+        document.getElementById("user-output").innerText = result.output;
+    }
+</script>
 </body>
 </html>

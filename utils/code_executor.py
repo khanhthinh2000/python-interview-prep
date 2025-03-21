@@ -1,38 +1,35 @@
-import json
+import sys
+import io
 
-def execute_code(user_code, problem_id):
+def execute_code(user_code):
     """
     Executes user-submitted Python code in a safe environment.
-    
+
     Args:
         user_code (str): The Python code submitted by the user.
-        problem_id (str): The ID of the problem being solved.
-    
+
     Returns:
-        dict: A dictionary containing the execution status, output, and expected output.
+        dict: A dictionary containing execution status and output.
     """
-    # Load problems from JSON
-    with open("problems.json") as f:
-        problems = json.load(f)
-
-    if problem_id not in problems:
-        return {"status": "Error", "output": "Problem not found"}
-
-    expected = problems[problem_id]["expected_output"]
-    
-    # Safe execution environment
     safe_globals = {}
 
     try:
-        exec(user_code, safe_globals)
-        
-        if "result" in safe_globals:
-            result = safe_globals["result"]
-        else:
-            return {"status": "Error", "output": "No result variable found"}
+        # Capture print statements
+        output_buffer = io.StringIO()
+        sys.stdout = output_buffer  # Redirect standard output
 
-        status = "Correct" if str(result).strip() == str(expected).strip() else "Incorrect"
-        return {"status": status, "output": str(result), "expected": str(expected)}
-    
+        # ✅ Execute any Python code (not just functions)
+        exec(user_code, safe_globals)
+
+        # Restore stdout and get printed output
+        sys.stdout = sys.__stdout__
+        printed_output = output_buffer.getvalue().strip()
+
+        return {
+            "status": "Success",
+            "output": printed_output.strip() if printed_output else "Execution completed with no output."
+        }
+
     except Exception as e:
+        sys.stdout = sys.__stdout__
         return {"status": "Error", "output": str(e)}
