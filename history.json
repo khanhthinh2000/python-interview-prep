@@ -1,0 +1,12 @@
+[
+    {
+        "code": "",
+        "output": "name 'gdfh' is not defined",
+        "status": "\u274c Fail"
+    },
+    {
+        "code": "",
+        "output": "name 'gdfhfdgh' is not defined",
+        "status": "\u274c Fail"
+    }
+]

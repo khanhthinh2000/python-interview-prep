@@ -34,8 +34,9 @@
         <!-- Controls Section -->
         <div class="controls-section">
             <label for="user-input">Function Arguments:</label>
-            <input type="text" id="user-input" placeholder="Enter args, e.g., 2, 3">
-            <button onclick="submitCode()">Run Code</button>
+            <input type="text" id="user-input" placeholder="Enter args, e.g., is_palindrome('racecar')">
+            <button id="run-button" onclick="submitCode()">Run Code</button>
+            <p id="attempt-info"></p>
         </div>
 
         <!-- Output Section -->
@@ -53,6 +54,8 @@
 
     <script>
         var editor;
+        var currentProblemId = "1";
+
         document.addEventListener("DOMContentLoaded", function() {
             editor = CodeMirror.fromTextArea(document.getElementById("code"), {
                 mode: "python",
@@ -67,9 +70,8 @@
         });
 
         async function fetchProblems() {
-            const response = await fetch('../problems');
+            const response = await fetch('/problems');
             const problems = await response.json();
-
             const select = document.getElementById("problem-select");
             select.innerHTML = '';
             const keys = Object.keys(problems);
@@ -84,28 +86,35 @@
         }
 
         async function loadProblem(problemId) {
-            const response = await fetch('../problems');
+            currentProblemId = problemId;
+            const response = await fetch('/problems');
             const problems = await response.json();
             const prob = problems[problemId];
             document.getElementById("problem-title").innerText = prob.title;
             document.getElementById("problem-description").innerText = prob.description;
             document.getElementById("problem-input").innerText = prob.input;
             document.getElementById("problem-output").innerText = prob.expected_output;
+            document.getElementById("run-button").disabled = false;
+            document.getElementById("attempt-info").innerText = "";
         }
 
         async function submitCode() {
             const code = editor.getValue();
             const userInput = document.getElementById("user-input").value;
-            const problemId = document.getElementById("problem-select").value;
-
             const response = await fetch('/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, userInput, problemId })
+                body: JSON.stringify({ code, userInput, problemId: currentProblemId })
             });
 
             const result = await response.json();
             document.getElementById("user-output").innerText = result.output;
+
+            if (result.status === "✅ Success" || result.status === "completed" || result.status === "locked") {
+                document.getElementById("run-button").disabled = true;
+            }
+
+            document.getElementById("attempt-info").innerText = `Attempts left: ${result.attempts ?? 0}`;
             loadHistory();
         }
 
@@ -116,7 +125,8 @@
             historyList.innerHTML = "";
             history.forEach(entry => {
                 const item = document.createElement("li");
-                item.textContent = `Code: ${entry.code} | Output: ${entry.output}`;
+                item.textContent = `Code: ${entry.code} | Output: ${entry.output} | ${entry.status}`;
+                item.style.color = entry.status.includes("Success") ? "green" : "red";
                 historyList.appendChild(item);
             });
         }
