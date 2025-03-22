@@ -3,55 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Interview Prep</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>Python Web IDE</title>
+
+    <!-- ✅ Load CSS from static folder using Flask -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/python/python.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { width: 80%; margin: auto; padding: 20px; }
+        #code-editor { border: 1px solid #ccc; }
+        #output-section { background: #f4f4f4; padding: 10px; margin-top: 20px; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>{{ problem.title if problem else "No Problem Title" }}</h1>
-        <p>{{ problem.description if problem else "No Problem Description" }}</p>
+        <h1>Python Web IDE</h1>
 
-        <textarea id="code" rows="5" cols="50">
-def sum_two_numbers(a, b):
-    print("Adding numbers...")
-    return a + b
+        <!-- CodeMirror Editor Section (Left-aligned) -->
+        <div class="code-editor-section">
+            <textarea id="code"></textarea>
+        </div>
 
-sum_two_numbers(2, 2)
+        <!-- Controls Section (Centered) -->
+        <div class="controls-section">
+            <label for="user-input">Function Arguments:</label>
+            <input type="text" id="user-input" placeholder="Enter args, e.g., 2, 3">
+            <button onclick="submitCode()">Run Code</button>
+        </div>
 
-        </textarea>
-
-        <br>
-        <button onclick="submitCode()">Run Code</button>
-
-        <!-- Display Result Message -->
-        <p id="result-message"></p>
-
-        <!-- Output Display Section (Added) -->
+        <!-- Output Section -->
         <div id="output-section">
             <h3>Output</h3>
-            <p><strong></strong> <span id="user-output"></span></p>
+            <p><strong>Your Output:</strong> <span id="user-output"></span></p>
+        </div>
+
+        <!-- Execution History -->
+        <div class="history-section">
+            <h3>Execution History</h3>
+            <ul id="history-list"></ul>
         </div>
     </div>
 
     <script>
-    async function submitCode() {
-        const code = document.getElementById("code").value;
-        console.log("DEBUG - Sending code:", code);  // Debugging log
-
-        const response = await fetch('/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
+        // Initialize CodeMirror Editor
+        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            mode: "python",
+            lineNumbers: true,
+            indentUnit: 4,
+            matchBrackets: true,
+            theme: "default"
         });
 
-        const result = await response.json();
-        console.log("DEBUG - Response from Flask:", result); // Debugging log
+        async function submitCode() {
+            const code = editor.getValue();
+            const userInput = document.getElementById("user-input").value;
 
-        document.getElementById("result-message").innerText = "Result: " + result.status;
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, userInput })
+            });
 
-        // ✅ Show full Python output (handles both print & return)
-        document.getElementById("user-output").innerText = result.output;
-    }
-</script>
+            const result = await response.json();
+            document.getElementById("user-output").innerText = result.output;
+
+            loadHistory(); // ✅ Reload history after execution
+        }
+
+        async function loadHistory() {
+            const response = await fetch('/history');
+            const history = await response.json();
+
+            const historyList = document.getElementById("history-list");
+            historyList.innerHTML = "";
+
+            history.forEach(entry => {
+                const item = document.createElement("li");
+                item.textContent = `Code: ${entry.code} | Output: ${entry.output}`;
+                historyList.appendChild(item);
+            });
+        }
+
+        loadHistory();  // ✅ Load history when page loads
+    </script>
 </body>
 </html>
