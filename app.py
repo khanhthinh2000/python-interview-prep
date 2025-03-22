@@ -12,7 +12,7 @@ with open(PROBLEMS_FILE) as f:
 
 # Load or initialize execution history
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), 'history.json')
-if os.path.exists(HISTORY_FILE) and os.path.getsize(HISTORY_FILE) > 0:
+if os.path.exists(HISTORY_FILE):
     with open(HISTORY_FILE) as f:
         execution_history = json.load(f)
 else:

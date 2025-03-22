@@ -12,12 +12,6 @@
     <div class="container">
         <h1>Python Web IDE</h1>
 
-        <!-- Problem Selector Section -->
-        <div class="problem-selector">
-            <label for="problem-select">Choose a Problem:</label>
-            <select id="problem-select" onchange="loadProblem(this.value)"></select>
-        </div>
-
         <!-- Problem Detail Display -->
         <div id="problem-details">
             <h3 id="problem-title"></h3>
@@ -35,9 +29,15 @@
         <div class="controls-section">
             <label for="user-input">Function Arguments:</label>
             <input type="text" id="user-input" placeholder="Enter args, e.g., is_palindrome('racecar')">
-            <button id="run-button" onclick="submitCode()">Run Code</button>
+            <button id="run-button" onclick="handleRunClick()">Run Code</button>
             <p id="attempt-info"></p>
         </div>
+
+        <div class="navigation-section">
+            <button id="next-button" onclick="nextQuestion()">Next Question</button>
+        </div>
+
+        <div id="final-result" style="display:none;"></div>
 
         <!-- Output Section -->
         <div id="output-section">
@@ -50,11 +50,16 @@
             <h3>Execution History</h3>
             <ul id="history-list"></ul>
         </div>
+       
     </div>
 
     <script>
         var editor;
+        var currentIndex = 0;
+        var problemIds = [];
         var currentProblemId = "1";
+        var buttonLocked = false;
+        var score = 0;
 
         document.addEventListener("DOMContentLoaded", function() {
             editor = CodeMirror.fromTextArea(document.getElementById("code"), {
@@ -66,23 +71,22 @@
             });
             editor.setSize("100%", "300px");
             fetchProblems();
-            loadHistory();
         });
+
+        function handleRunClick() {
+            if (buttonLocked) {
+                alert("You've completed or used all attempts for this problem. Please try the next question.");
+            } else {
+                submitCode();
+            }
+        }
 
         async function fetchProblems() {
             const response = await fetch('/problems');
             const problems = await response.json();
-            const select = document.getElementById("problem-select");
-            select.innerHTML = '';
             const keys = Object.keys(problems);
-            const shuffled = keys.sort(() => 0.5 - Math.random()).slice(0, 3);
-            shuffled.forEach(key => {
-                const option = document.createElement("option");
-                option.value = key;
-                option.text = problems[key].title;
-                select.appendChild(option);
-            });
-            loadProblem(shuffled[0]);
+            problemIds = keys.sort(() => 0.5 - Math.random()).slice(0, 3);
+            loadProblem(problemIds[currentIndex]);
         }
 
         async function loadProblem(problemId) {
@@ -95,7 +99,9 @@
             document.getElementById("problem-input").innerText = prob.input;
             document.getElementById("problem-output").innerText = prob.expected_output;
             document.getElementById("run-button").disabled = false;
+            buttonLocked = false;
             document.getElementById("attempt-info").innerText = "";
+            document.getElementById("user-output").innerText = "";
         }
 
         async function submitCode() {
@@ -110,12 +116,34 @@
             const result = await response.json();
             document.getElementById("user-output").innerText = result.output;
 
+            if (result.status === "✅ Success") {
+                score++;
+            }
+
             if (result.status === "✅ Success" || result.status === "completed" || result.status === "locked") {
                 document.getElementById("run-button").disabled = true;
+                buttonLocked = true;
             }
 
             document.getElementById("attempt-info").innerText = `Attempts left: ${result.attempts ?? 0}`;
             loadHistory();
+        }
+
+        function nextQuestion() {
+            if (currentIndex < 2) {
+                currentIndex++;
+                loadProblem(problemIds[currentIndex]);
+                if (currentIndex === 2) {
+                    document.getElementById("next-button").innerText = "Submit Test";
+                }
+            } else {
+                // Show final result
+                const resultText = score >= 2 ? "✅ Test Passed!" : "❌ Test Failed.";
+                document.getElementById("final-result").style.display = "block";
+                document.getElementById("final-result").innerText = resultText;
+                document.getElementById("next-button").disabled = true;
+                document.getElementById("run-button").disabled = true;
+            }
         }
 
         async function loadHistory() {

@@ -8,5 +8,15 @@
         "code": "",
         "output": "name 'gdfhfdgh' is not defined",
         "status": "\u274c Fail"
+    },
+    {
+        "code": "",
+        "output": "expected '(' (<string>, line 1)",
+        "status": "\u274c Fail"
+    },
+    {
+        "code": "",
+        "output": "expected '(' (<string>, line 1)",
+        "status": "\u274c Fail"
     }
 ]
