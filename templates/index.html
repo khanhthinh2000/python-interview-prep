@@ -2,34 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python Web IDE</title>
-
-    <!-- ✅ Load CSS from static folder using Flask -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.0/mode/python/python.min.js"></script>
-
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .container { width: 80%; margin: auto; padding: 20px; }
-        #code-editor { border: 1px solid #ccc; }
-        #output-section { background: #f4f4f4; padding: 10px; margin-top: 20px; }
-    </style>
 </head>
 <body>
     <div class="container">
         <h1>Python Web IDE</h1>
 
-        <!-- CodeMirror Editor Section (Left-aligned) -->
+        <!-- Problem Selector Section -->
+        <div class="problem-selector">
+            <label for="problem-select">Choose a Problem:</label>
+            <select id="problem-select" onchange="loadProblem(this.value)"></select>
+        </div>
+
+        <!-- Problem Detail Display -->
+        <div id="problem-details">
+            <h3 id="problem-title"></h3>
+            <p id="problem-description"></p>
+            <p><strong>Input:</strong> <span id="problem-input"></span></p>
+            <p><strong>Expected Output:</strong> <span id="problem-output"></span></p>
+        </div>
+
+        <!-- Code Editor Section -->
         <div class="code-editor-section">
             <textarea id="code"></textarea>
         </div>
 
-        <!-- Controls Section (Centered) -->
+        <!-- Controls Section -->
         <div class="controls-section">
             <label for="user-input">Function Arguments:</label>
             <input type="text" id="user-input" placeholder="Enter args, e.g., 2, 3">
@@ -39,7 +41,7 @@
         <!-- Output Section -->
         <div id="output-section">
             <h3>Output</h3>
-            <p><strong>Your Output:</strong> <span id="user-output"></span></p>
+            <pre><strong>Your Output:</strong> <span id="user-output"></span></pre>
         </div>
 
         <!-- Execution History -->
@@ -50,46 +52,74 @@
     </div>
 
     <script>
-        // Initialize CodeMirror Editor
-        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-            mode: "python",
-            lineNumbers: true,
-            indentUnit: 4,
-            matchBrackets: true,
-            theme: "default"
+        var editor;
+        document.addEventListener("DOMContentLoaded", function() {
+            editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+                mode: "python",
+                lineNumbers: true,
+                indentUnit: 4,
+                matchBrackets: true,
+                theme: "default"
+            });
+            editor.setSize("100%", "300px");
+            fetchProblems();
+            loadHistory();
         });
+
+        async function fetchProblems() {
+            const response = await fetch('../problems');
+            const problems = await response.json();
+
+            const select = document.getElementById("problem-select");
+            select.innerHTML = '';
+            const keys = Object.keys(problems);
+            const shuffled = keys.sort(() => 0.5 - Math.random()).slice(0, 3);
+            shuffled.forEach(key => {
+                const option = document.createElement("option");
+                option.value = key;
+                option.text = problems[key].title;
+                select.appendChild(option);
+            });
+            loadProblem(shuffled[0]);
+        }
+
+        async function loadProblem(problemId) {
+            const response = await fetch('../problems');
+            const problems = await response.json();
+            const prob = problems[problemId];
+            document.getElementById("problem-title").innerText = prob.title;
+            document.getElementById("problem-description").innerText = prob.description;
+            document.getElementById("problem-input").innerText = prob.input;
+            document.getElementById("problem-output").innerText = prob.expected_output;
+        }
 
         async function submitCode() {
             const code = editor.getValue();
             const userInput = document.getElementById("user-input").value;
+            const problemId = document.getElementById("problem-select").value;
 
             const response = await fetch('/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code, userInput })
+                body: JSON.stringify({ code, userInput, problemId })
             });
 
             const result = await response.json();
             document.getElementById("user-output").innerText = result.output;
-
-            loadHistory(); // ✅ Reload history after execution
+            loadHistory();
         }
 
         async function loadHistory() {
             const response = await fetch('/history');
             const history = await response.json();
-
             const historyList = document.getElementById("history-list");
             historyList.innerHTML = "";
-
             history.forEach(entry => {
                 const item = document.createElement("li");
                 item.textContent = `Code: ${entry.code} | Output: ${entry.output}`;
                 historyList.appendChild(item);
             });
         }
-
-        loadHistory();  // ✅ Load history when page loads
     </script>
 </body>
 </html>
