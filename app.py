@@ -23,19 +23,29 @@ def get_problems():
 
 @app.route("/submit", methods=["POST"])
 def submit():
-    data = request.json
-    user_code = data["code"]
-    user_input = data.get("userInput", "")
-    problem_id = data.get("problemId", "1")
+    try:
+        data = request.json
+        user_code = data["code"]
+        user_input = data.get("userInput", "")
+        problem_id = data.get("problemId", "1")
 
-    result = execute_code(user_code, problem_id, user_input)
+        if problem_id not in problems:
+            return jsonify({ "output": f"Error: Problem ID '{problem_id}' not found." }), 400
 
-    execution_history.append({
-        "code": user_code,
-        "output": result["output"]
-    })
+        print(f"Executing problem {problem_id} with user code:\n{user_code}")
+        result = execute_code(user_code, user_input)
 
-    return jsonify(result)
+        execution_history.append({
+            "code": user_code,
+            "output": result["output"]
+        })
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            "output": f"Error: {str(e)}"
+        }), 500
 
 @app.route("/history")
 def history():
