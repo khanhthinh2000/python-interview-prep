@@ -1,4 +1,4 @@
-{
+problems =  {
     "1": {
         "title": "Sum of Two Numbers",
         "description": "Write a function that takes two numbers and returns their sum.",

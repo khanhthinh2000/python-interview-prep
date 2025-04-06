@@ -7,8 +7,7 @@ app = Flask(__name__)
 
 # Load problems from JSON file
 PROBLEMS_FILE = os.path.join(os.path.dirname(__file__), 'problems.json')
-with open(PROBLEMS_FILE) as f:
-    problems = json.load(f)
+from problems import problems
 
 # Load or initialize execution history
 HISTORY_FILE = os.path.join(os.path.dirname(__file__), 'history.json')

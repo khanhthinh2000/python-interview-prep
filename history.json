@@ -1,22 +1,22 @@
 [
     {
-        "code": "",
-        "output": "name 'gdfh' is not defined",
+        "code": "sum_two_numbers(2, 3)",
+        "output": "expected ':' (<string>, line 1)",
         "status": "\u274c Fail"
     },
     {
-        "code": "",
-        "output": "name 'gdfhfdgh' is not defined",
+        "code": "sum_two_numbers(2, 3)",
+        "output": "name 'sum_two_numbers' is not defined",
         "status": "\u274c Fail"
     },
     {
-        "code": "",
-        "output": "expected '(' (<string>, line 1)",
+        "code": "sum_two_numbers(2, 3)",
+        "output": "name 'sum_two_numbers' is not defined",
         "status": "\u274c Fail"
     },
     {
-        "code": "",
-        "output": "expected '(' (<string>, line 1)",
+        "code": "sum_two_numbers(2, 3)",
+        "output": "name 'sum_two_numbers' is not defined",
         "status": "\u274c Fail"
     }
 ]
